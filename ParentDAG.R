@@ -49,6 +49,8 @@ INDAG <- function(S,G,Y,s,Confound=NA){
     q = dim(G)[2]
     n = dim(S)[1]
     
+    g=c(1:q)
+    
     s.G = apply(G, 2, function(x)x=x-mean(x))
     s.S = S - mean(S)
     s.Y = Y - mean(Y)
