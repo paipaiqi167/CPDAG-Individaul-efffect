@@ -1,1 +1,1 @@
-# CPDAG-Individaul-efffect
+# CPDAG-Individaul-effect
