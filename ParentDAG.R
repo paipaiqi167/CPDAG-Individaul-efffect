@@ -157,3 +157,161 @@ INDAG <- function(S,G,Y,s,Confound=NA){
    
 }
 }
+
+## Simulation 
+##################################
+times = 100
+Result_Ind_PathwayLasso1 = matrix(0,times,11)
+Result_Ind_PathwayLasso1 = data.frame(Result_Ind_PathwayLasso1)
+colnames(Result_Ind_PathwayLasso1) = c('trail','M1','M2','M3','M4','M5','M6','M7','M8','M9','M10')
+
+Result_Ind_CPDAG1 = matrix(0,times,31)
+Result_Ind_CPDAG1 = data.frame(Result_Ind_CPDAG1)
+colnames(Result_Ind_CPDAG1) =c('trail','M1','M2','M3','M4','M5','M6','M7','M8','M9','M10','M1upper','M2upper'
+                               ,'M3upper','M4upper','M5upper','M6upper','M7upper','M8upper','M9upper','M10upper'
+                               ,'M1lower','M2lower','M3lower','M4lower','M5lower','M6lower','M7lower','M8lower','M9lower','M10lower')
+
+Result_Ind_Situation1_true = matrix(0,times,11)
+Result_Ind_Situation1_true= data.frame(Result_Ind_Situation1_true)
+colnames(Result_Ind_Situation1_true) = c('trail','M1','M2','M3','M4','M5','M6','M7','M8','M9','M10')
+  
+  
+  
+scaling = c(0.8)
+for( scales in  c(1))
+{
+  for(t in c(1:times))
+  {
+    set.seed(t+1000)
+    cat('ttttttttttttttttttttttttt=',t+(scales-1)*100,'\n')
+    n=161
+    p=38
+    q=10
+    
+    Cor1 = pcor(raw_data[,c(1:9)])[[1]]
+    Cor2 = pcor(raw_data[,c(10:18)])[[1]]
+    Cor3 = pcor(raw_data[,c(19:26)])[[1]]
+    Cor4 = pcor(raw_data[,c(27:38)])[[1]]
+    
+    Exposure = matrix(0,n,38)
+    for(i in c(1:38))
+    {
+      Exposure[,i] = rnorm(n,0,1)
+    }
+    Exposure[,c(1:9)] = Exposure[,c(1:9)]%*%Cor1
+    Exposure[,c(10:18)] = Exposure[,c(10:18)]%*%Cor2
+    Exposure[,c(19:26)] = Exposure[,c(19:26)]%*%Cor3
+    Exposure[,c(27:38)] = Exposure[,c(27:38)]%*%Cor4
+    
+    for(i in c(1:38))
+    {
+      Exposure[,i] = (Exposure[,i] - mean(Exposure[,i]))/sd(Exposure[,i])
+    }
+    
+    exp_coef = matrix(rnorm(p*q,0,2),p,q)
+    b = rnorm(q,0,2)
+    for(i in c(1:q))
+    {
+      if(runif(1,0,1) >= scaling[scales])
+      {
+        exp_coef[,i] = 0
+        b[i] = 0
+      }
+    }
+    b = b*sqrt(0.5/scaling[scales])
+    for(i in c(1:p))
+    {
+      exp_coef[i,] = exp_coef[i,]*sqrt(0.5/scaling[scales])
+    }
+    
+    Mediator = Exposure%*%exp_coef
+    
+    mp = 0.5
+    M_matrix = matrix(0,q,q)
+    for(i in c(1:q))
+    {for(j in c(1:q))
+    {
+      if(i >= j)
+      {
+        M_matrix[i,j] = 0
+      }
+      else if(M_matrix[i,j] <= 0)
+      {
+        if(i <= 4 && j <= 5)
+        {
+          if(runif(1,0,1) <= mp)
+            M_matrix[i,j] = rnorm(1,0,1)
+        }else if(i >= 6 && i <= 9 && j <= 10)
+        {
+          if(runif(1,0,1) <= mp)
+            M_matrix[i,j] = rnorm(1,0,1)
+  
+        }
+      }
+      
+    }
+    }
+    
+    Mediator[,1] <- Mediator[,1] + rnorm(n,0,1)
+    for(i in c(2:q))
+    {
+      if(i > 2)
+        Mediator[,i] <- Mediator[,i] + Mediator[,c(1:(i-1))]%*%M_matrix[c(1:(i-1)),i] + rnorm(n,0,1)
+      else  ### odd number
+        Mediator[,i] <- Mediator[,i] + Mediator[,c(1:(i-1))]*M_matrix[c(1:(i-1)),i] + rnorm(n,0,1)
+    }
+    
+    for(i in c(1:q))
+    {
+      Mediator[,i] = (Mediator[,i] - mean(Mediator[,i]))/sd(Mediator[,i])
+    }
+    
+    
+    
+    Y <- cbind(rep(1,n),Exposure)
+    Y <- Y%*%rep(1,(p+1))+Mediator%*%b
+    for(i in c(1:n))
+    {
+      Y[i] = Y[i] + rnorm(1,0,1)
+    }
+    
+    X = cbind(Exposure,Mediator,Y)
+    
+    Path = pathlasso.apply(X,1,49,10,39,lambda=c(0.01))
+    Result_Ind_PathwayLasso1[t,1] = t
+    Result_Ind_PathwayLasso1[t,-1] = Path[[2]]
+    
+
+    DAG = INDAG(Exposure,Mediator,Y,1)
+    
+    Result_Ind_CPDAG1[t,1] = t
+    Result_Ind_CPDAG1[t,c(2:(q+1))] = DAG$indeffect
+    Result_Ind_CPDAG1[t,c((q+2):(2*q+1))] = DAG$upper
+    Result_Ind_CPDAG1[t,c((2*q+2):(3*q+1))] = DAG$lower
+    
+    Result_Ind_Situation1_true[t,1] = t
+    Result_Ind_Situation1_true[t,-1] = exp_coef[1,]*b
+  }
+}
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
