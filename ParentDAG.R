@@ -1,6 +1,7 @@
 library(stringr)
 library(pcalg)
 
+################## the mediator node you may concern its parent node
 
 ParentDAG <- function(x.pos=NA,graphEst){
   
@@ -30,6 +31,13 @@ ParentDAG <- function(x.pos=NA,graphEst){
   return(parent)
 
 }
+
+################## S: the vector of exposure
+################## G: the matrix of all the mediator
+################## Y: the vector of outcome
+################## g: the mediator node you may concern
+
+
 INDAG <- function(S,G,Y,g,Confound=NA){
   if(is.na(Confound))
   {
