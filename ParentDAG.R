@@ -1,7 +1,7 @@
 library(stringr)
 library(pcalg)
 
-################## the mediator node you may concern its parent node
+################## x.pos: the mediator node you may concern its parent node
 
 ParentDAG <- function(x.pos=NA,graphEst){
   
