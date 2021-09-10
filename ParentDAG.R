@@ -1,4 +1,6 @@
 library(stringr)
+library(pcalg)
+
 
 ParentDAG <- function(x.pos=NA,graphEst){
   
