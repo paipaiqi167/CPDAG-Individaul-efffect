@@ -1,3 +1,9 @@
+######### S := Exposure vector 
+######### Y := Outcome vector
+######### thershold := the thershold dividing exposure into two part
+
+
+
 DATE <- function( S,Y,nfold = 2,thershold=NA,Confounding = NA)
 {
   if(is.vector(S))
