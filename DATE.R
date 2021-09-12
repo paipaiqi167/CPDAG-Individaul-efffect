@@ -38,7 +38,7 @@ DATE <- function( S,Y,nfold = 2,thershold=NA,Confounding = NA)
           for(j in c(1:v.n))
           {
             estimate.p1[i] = estimate.p1[i] + (ifelse(v.S[j] >= thershold,1,0)/p.1)*(v.Y[j] - e.y1) + e.y1
-            estimate.p0[i] = estimate.p0[i] + (ifelse(v.S[j] >= thershold,1,0)/p.0)*(v.Y[j] - e.y0) + e.y0
+            estimate.p0[i] = estimate.p0[i] + (ifelse(v.S[j] < thershold,1,0)/p.0)*(v.Y[j] - e.y0) + e.y0
             
           }
           
