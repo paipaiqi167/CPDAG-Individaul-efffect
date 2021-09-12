@@ -42,6 +42,9 @@ DATE <- function( S,Y,nfold = 2,thershold=NA,Confounding = NA)
             
           }
           
+          estimate.p1[i] = estimate.p1[i] /v.n
+          estimate.p0[i] = estimate.p0[i] /v.n
+          
         }
         
         total = estimate.p1-estimate.p0
