@@ -2,10 +2,10 @@
 ##### Main Function ######
 ##########################
 
-# X: Exposure
-# Y: Outcome
-# M: Mediator
-# COV.XM & COV.MY: Covariate
+# X: Exposure (Vector or Matrix)
+# Y: Outcome (Vector or Matrix)
+# M: Mediator (Matrix)
+# COV.XM & COV.MY: Covariates (Matrix)
 
 
 hima <- function(X, Y, M, COV.XM = NULL, COV.MY = COV.XM, 
