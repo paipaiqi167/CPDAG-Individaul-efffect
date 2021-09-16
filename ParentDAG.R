@@ -79,6 +79,7 @@ ParentDAG <- function(x.pos=NA,graphEst){
     }
     cluster.set = list()
     
+    
     NewS.set = S.set
     count = 1
     for(i in c(1:q))
@@ -87,15 +88,21 @@ ParentDAG <- function(x.pos=NA,graphEst){
       {
         cluster.set[[count]] = list()
         un.set = unique(Searching(S.set,i))
+        if(sum(intersect(un.set,-1)) < 0)
+        {
+          un.set = un.set[-which(un.set==-1)]
+          un.set = c(-1,un.set)
+          type = 1
+        }
         
         if(!is.na(un.set[1]))
         {
-        cluster.set[[count]] = un.set
-        for(j in c(1:length(cluster.set[[count]])))
-        {
-          NewS.set[[ cluster.set[[count]][j] ]] = 0
-        }
-        count = count+1
+          cluster.set[[count]] = un.set
+          for(j in c((1+type):(length(cluster.set[[count]]))))
+          {
+            NewS.set[[ cluster.set[[count]][j] ]] = 0
+          }
+          count = count+1
         }
         
       }
@@ -104,72 +111,81 @@ ParentDAG <- function(x.pos=NA,graphEst){
     parent$ndag = rep(1,q)
     error = 0
     i=1
-    wgt.unique =  ad.g
+
     while(i <=(count-1) && error == 0)
     {
         node.set = unlist(cluster.set[[i]])
         l = length(node.set)
-        for(j in c(1:l))
-        {
-          if(length(as.vector(which(wgt.unique[node.set[j], ]!= 0))) >= l)
-          {
-            error = 1
-            cat("unknown structure \n")
-            return(NA)
-          }
+        wgt.unique <- wgtMatrix(graphEst)
+        
+        if(node.set[1]==-1){
+        node.set = node.set[-1]
+        l = l-1
         }
         
-        parent$ndag[node.set] = l
-        for( j in c(1:l)) #### j is ndag
-        {for(m in c(1:l)) #### m is node
+        target.set = node.set
+        for(m  in c(1:l))
         {
-          
-          if(j==l)
+          target.set = c(target.set,as.vector(which(wgt.unique[node.set[m], ]!= 0)))
+          target.set = c(target.set,as.vector(which(wgt.unique[,node.set[m]]!= 0)))
+        }
+        target.set = unique(target.set)
+        target.set =  sort(target.set) 
+        target.matrix = wgt.unique[target.set,target.set]
+        tp = length(target.set)
+        
+        Target <- pdag2allDags(target.matrix)$dags
+        number <- nrow(Target)
+        if(is.null(number))
+        {
+          parent$ndag[node.set[j]] = 0
+          for(j in c(1:l))
           {
-            parent$node[[node.set[m]]][[j]] = 0
-          }else{
-            
-            if(l == 2)
-            {
-              parent$node[[node.set[m]]][[j]] = node.set[-m]
-              
-            }else{
-            if(j <= (m-1))
-            {
-              parent$node[[node.set[m]]][[j]] = node.set[(m-1)]
-            }else{
-              parent$node[[node.set[m]]][[j]] = node.set[(m+1)]
-            }
-            }
-          }  
+              parent$node[[node.set[j]]][[1]] = 0
+          }
+          i=i+1
           
-        } 
+        }else{
+          
+        parent$ndag[node.set] <- nrow(Target)
+        
+        for (m in 1:number)
+        {for(j in c(1:l))
+        {
+          wgt.unique <- t(matrix(Target[m,],tp,tp))
+          if(length(which(wgt.unique[order(target.set)[which(target.set==node.set[j])], ] != 0))==0)
+          {
+            parent$node[[node.set[j]]][[m]] = 0
+          }else{
+            parent$node[[node.set[j]]][[m]] <- target.set[as.vector(which(wgt.unique[order(target.set)[which(target.set==node.set[j])], ]!=0 ))]
+          }
+        }
         }
         i=i+1
-    }
-    
-    if(error ==0)
-    {
-      cat("almost done")
-      wgt.unique <- wgtMatrix(graphEst)
-      for(j in c(1:length(x.pos)))
-      {
-        if(parent$ndag[j] == 1)
-        {
-          if(length(which(wgt.unique[x.pos[j], ] != 0))==0)
-          {
-            parent$node[[j]][[1]] = 0
-          }else{
-            parent$node[[j]][[1]] <- as.vector(which(wgt.unique[x.pos[j], ]!= 0))
-          }
         }
-        
-      }
-      cat("Caculate mannually \n")
-      return(parent)
-    
-    
     }
+    
+
+    wgt.unique <- wgtMatrix(graphEst)
+    for(j in c(1:length(x.pos)))
+    {
+      if(parent$ndag[j] == 1)
+      {
+        if(length(which(wgt.unique[x.pos[j], ] != 0))==0)
+        {
+          parent$node[[j]][[1]] = 0
+        }else{
+          parent$node[[j]][[1]] <- as.vector(which(wgt.unique[x.pos[j], ]!= 0))
+        }
+      }
+      
+      if(parent$ndag[j] == 0)
+        parent$ndag[j] = 1
+    }
+    return(parent)
+  
+  
+
 }
 
   ######################################################
@@ -195,13 +211,14 @@ ParentDAG <- function(x.pos=NA,graphEst){
   #return(parent)
 }
 
-INDAG <- function(S,G,Y,s,Confound=NA){
+INDAG <- function(S,G,Y,s,Confound=NA,True.Parent = NA){
   if(is.na(Confound))
   {
+    S = as.matrix(S)
     
     p = dim(S)[2]
     q = dim(G)[2]
-    n = dim(S)[1]
+    n = length(Y)
     
     g=c(1:q)
     
@@ -221,17 +238,15 @@ INDAG <- function(S,G,Y,s,Confound=NA){
       Z_part1[,j] = s.S[,s]*R
     }
     
-    
-    suffStat <- list(C = cor(G), n = nrow(G))
-    CP =  pc(suffStat, indepTest = gaussCItest,
-                p = ncol(G), alpha = 0.01)
-    cat("CP finished \n")
-    Pr = ParentDAG(g,CP@graph)
-    
-    if(!is.list(Pr))
+    if(!anyNA(True.Parent))
     {
-      cat("unkown structure\n")
-      return(0)
+      Pr = ParentDAG2(True.Parent)
+    }else{
+      
+      suffStat <- list(C = cor(G), n = nrow(G))
+      CP =  pc(suffStat, indepTest = gaussCItest,
+                  p = ncol(G), alpha = 0.01)
+      Pr = ParentDAG(g,CP@graph)
     }
     
     beta_part2 = rep(0,q)
@@ -239,11 +254,13 @@ INDAG <- function(S,G,Y,s,Confound=NA){
     
     for (j in c(1:q)) 
     {
-      print(j)
+
       for(i in c(1:Pr$ndag[j]))
       {
+        #print(c(j,i))
         if(Pr$node[[j]][[i]][1]!=0)  ###　this node has parent nodes
         {
+          
           M = lm(Y~G[,g[j]]+G[,c(Pr$node[[j]][[i]])])
           beta_part2[j] = beta_part2[j]  + coef(M)[2]
           
@@ -288,7 +305,7 @@ INDAG <- function(S,G,Y,s,Confound=NA){
     IND$lower = lowerbound
     
     return(IND)
-    
+  
   }else{
     
     beta_part1 = coef(lm(G~S+Confound))[2]
@@ -323,27 +340,75 @@ INDAG <- function(S,G,Y,s,Confound=NA){
 
 Searching <- function(Set,k,avoid=NA)
 {
+  
   n.k = as.vector(t(as.matrix(k)))
   n.set = unlist(Set[k][1])
+  n.set = setdiff(n.set,intersect(n.set,avoid))
   
-  if(is.na(avoid[1])&&length(n.set) >= 2)   ### reject the node which is not on the head
+  if(anyNA(avoid)&&length(n.set) >= 2)   ### reject the node which is not on the head
     return(NA)
-    
-  if(!is.na(avoid)) 
+   
+  if(!anyNA(avoid)) 
   {
-    if(sum(intersect(n.set,avoid)-n.set)==0)
+    if(sum(n.set)==0)
     {
+
       return(NULL)
     }
   }
   out = c(n.k,n.set)
   
-  if(is.na(avoid)){
-    out = c(out,Searching(Set,n.set,n.k))
-  }else{
-    out = c(out,Searching(Set,n.set[-which(n.set==avoid)],n.k))
+  if(length(setdiff(n.set,intersect(n.set,avoid))) <=1)  ## whether is a core
+  {
+    if(anyNA(avoid)){
+      
+      avoid.set = c(n.k,n.set)
+      out = c(out,Searching(Set,n.set,avoid.set))
+      
+    }else{
+      avoid.set = c(n.k,n.set,avoid)
+      out = c(out,Searching(Set,n.set,avoid.set))
+      
+    }
+    return(out)
     
+  }else{
+    
+    target.set = setdiff(n.set,intersect(n.set,avoid))
+    if(anyNA(avoid)){avoid.set = c(n.k,n.set)}else{avoid.set = c(n.k,n.set,avoid)}
+    m = length(target.set)
+    for(i in c(1:m))
+    {
+      out = c(out,Searching(Set,target.set[i],avoid.set))
+      avoid.set = unique(c(out,avoid.set))
+      
+    }
+    out = unique(out)
+    return(c(-1,out))
   }
-  return(out)
 }
+
+ParentDAG2 <- function(M){
+  
+  q <- dim(M)[1]
+
+  parent = list()
+  parent$node = list()
+  parent$ndag = rep(1,q)
+
+  for(j in c(1:q))
+  {
+    if(length(which(M[j,-j] != 0))==0)
+    {
+      parent$node[[j]] = 0
+    }else{
+      parent$node[[j]] <- setdiff(as.vector(which(M[j,]!= 0)),j)
+    }
+  }
+  
+  return(parent)
+    
+}
+
+
 
