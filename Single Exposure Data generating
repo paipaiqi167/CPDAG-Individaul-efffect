@@ -46,3 +46,19 @@ set.seed(t+1000)
   }
   return(M_matrix)
 }
+
+MSE <- function(A,B,scale=0)
+{
+  if(length(A)!=length(B))
+    return(1000000000000000000000000000000000000000000000)
+
+  answer = 0
+  for(i in c(1:length(A)))
+  {
+    answer = answer + (A[i]-B[i])^2
+  }
+  if(scale==0)
+    return(answer)
+  else
+    return(answer/length(A))
+}
