@@ -1,32 +1,7 @@
 library("freebird")
 library('tidyverse')
 library('ggpubr')
-
-
-
-raw_data =read.csv(file.choose())
-#define:
-nexp<- 42#define the number of exposure analytes in your dataset
-  nmed<- 61#define the number of mediators in your dataset
-  ncovars<- 6#define the number of covariates and outcome variable in your dataset
-
-  MSE <- function(A,B,scale=0)
-  {
-    if(length(A)!=length(B))
-      return(1000000000000000000000000000000000000000000000)
-    
-    answer = 0
-    for(i in c(1:length(A)))
-    {
-      answer = answer + (A[i]-B[i])^2
-    }
-    if(scale==0)
-      return(answer)
-    else
-      return(answer/length(A))
-  }
-  
-    
+   
   #pathlass.apply function asks you to input the main exposure and outcome of interest
 pathlasso.apply<-function(Data,exposure,outcome,nmed,med_start,lambda){
   A<-Data[,exposure]
