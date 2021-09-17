@@ -1,11 +1,11 @@
 ### Methods
-- Pathway Lasso: 
-  - Main Function
-  - ADMM
-  - VSS
-  - Function (1)
-- Double Robust ATE
-- MCP (with SIS and joint significance test by Zhang et al.)
+- Pathway Lasso: Use **pathlasso.apply** function to estimate
+  - Other Utility: 
+    - ADMM
+    - VSS
+    - Function (1)
+- Double Robust ATE: Use **DATE** function to estimate
+- MCP (with SIS and joint significance test by Zhang et al.): Use **hima** function to estimate
 - MIDA: Debiased Lasso (Based on freebird package)
 
 ### Data
