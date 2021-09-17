@@ -2,7 +2,14 @@ library("freebird")
 library('tidyverse')
 library('ggpubr')
    
-  #pathlass.apply function asks you to input the main exposure and outcome of interest
+#Data := A matrix composed by exposure matrix, mediator matrix and outcome vector.
+#exposure := A scalar represent the column of data should be the exposure.
+#outcome := A scalar represent the column of data should be the outcome.
+#nmed := number of mediator.
+#med_start := The number of column of the mediators start.
+#lambda := the lambda one may want to use. It can also be a vector providing the lambda set to be choosen by cross-validation.
+
+
 pathlasso.apply<-function(Data,exposure,outcome,nmed,med_start,lambda){
   A<-Data[,exposure]
   M<-Data[,((med_start):(med_start+nmed-1))]
