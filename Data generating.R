@@ -4,7 +4,7 @@ n=161
 p=38
 q=61
 
-Cor1 = pcor(raw_data[,c(1:9)])[[1]]
+Cor1 = pcor(raw_data[,c(1:9)])[[1]]      ##### raw data should be the data you want to simulate.
 Cor2 = pcor(raw_data[,c(10:18)])[[1]]
 Cor3 = pcor(raw_data[,c(19:26)])[[1]]
 Cor4 = pcor(raw_data[,c(27:38)])[[1]]
@@ -24,18 +24,23 @@ for(i in c(1:p))
   Exposure[,i] = (Exposure[,i] - mean(Exposure[,i]))/sd(Exposure[,i])
 }
 
-exp_coef = matrix(rnorm(p*q,0,1),p,q)
+exp_coef = matrix(0,p,q)
 for(i in c(1:p))
-  exp_coef[i,] = exp_coef[i,]*ifelse(runif(q,0,1)<= 0.2,1,0)
+{
+  t.exp_coef <- runif(q,0.5,1)
+  t.exp_coef <- t.exp_coef*ifelse(runif(q,0,1) <= 0.5,1,-1)
+  t.exp_coef <- t.exp_coef*ifelse(runif(q,0,1)<= 0.36,1,0)
+  exp_coef[i,] = t.exp_coef
+}
 
-b <- rnorm(q,0,1)
-b <- b*ifelse(runif(length(b),0,1) <= 0.2,1,0)
+b <- runif(q,0.5,1)
+b <- b*ifelse(runif(q,0,1) <= 0.5,1,-1)
+b <- b*ifelse(runif(length(b),0,1) <= 0.36,1,0)
 Mediator = Exposure%*%exp_coef
 
-dp = 0.067
+dp = 5/choose(61,2)
 M_matrix = M_generate(q,dp)
-Mediator = Mediator%*%M_matrix + matrix(rnorm(1,0,1),n,q)
-
+Mediator = Mediator%*%M_matrix + matrix(rnorm(n*q,0,1),n,q)
 
 Y <- cbind(rep(1,n),Exposure)
 Y <- Y%*%rep(1,(p+1))+Mediator%*%b
@@ -45,7 +50,6 @@ for(i in c(1:n))
 }
 
 X = cbind(Exposure,Mediator,Y)
-
 
 M_generate <- function(q,p){
   M_matrix = diag(rep(1,q),)
