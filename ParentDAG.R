@@ -79,7 +79,6 @@ ParentDAG <- function(x.pos=NA,graphEst){
     }
     cluster.set = list()
     
-    
     NewS.set = S.set
     count = 1
     for(i in c(1:q))
@@ -187,6 +186,28 @@ ParentDAG <- function(x.pos=NA,graphEst){
   
 
 }
+
+  ######################################################
+  #cat("Caculate by package \n")
+  
+  #ad <- pdag2allDags(ad.g)$dags
+  #n.dags <- nrow(ad)
+  
+  #parent$ndag = n.dags
+  
+  #for (i in 1:n.dags)
+  #{for(j in c(1:length(x.pos)))
+  #{
+  #  wgt.unique <- t(matrix(ad[i, ], p, p))
+  #  if(length(which(wgt.unique[x.pos[j], ] != 0))==0)
+  #  {
+  #    parent$node[[j]][[i]] = 0
+  #  }else{
+  #    parent$node[[j]][[i]] <- as.vector(which(wgt.unique[x.pos[j], ]!= 0))
+  #  }
+  #}
+  #}
+  #return(parent)
 }
 
 INDAG <- function(S,G,Y,s,Confound=NA,True.Parent = NA){
@@ -239,18 +260,18 @@ INDAG <- function(S,G,Y,s,Confound=NA,True.Parent = NA){
         if(Pr$node[[j]][[i]][1]!=0)  ###　this node has parent nodes
         {
           
-          M = lm(Y~G[,g[j]]+G[,c(Pr$node[[j]][[i]])])
+          M = lm(Y~G[,g[j]]+G[,c(Pr$node[[j]][[i]])]+S[,s])
           beta_part2[j] = beta_part2[j]  + coef(M)[2]
           
-          R = Y - s.G[,c(g[j],Pr$node[[j]][[i]])]%*%M$coefficients[-1]
+          R = Y - s.G[,c(g[j],Pr$node[[j]][[i]])]%*%M$coefficients[-c(1,length(M$coefficients))]
           Z_part2[,j]  = Z_part2[,j]  + ( t(solve(cov(s.G[,c(g[j],Pr$node[[j]][[i]])]))%*%t(s.G[,c(g[j],Pr$node[[j]][[i]])]))[,1]*R )
             
         }else{
           
-          M = lm(Y~G[,g[j]])
+          M = lm(Y~G[,g[j]]+S[,s])
           beta_part2[j]  = beta_part2[j]  + coef(M)[2]
           
-          R = Y - s.G[,g[j]]*M$coefficients[-1]
+          R = Y - s.G[,g[j]]*M$coefficients[-c(1,length(M$coefficients))]
           Z_part2[,j]  = Z_part2[,j]  + (s.G[,g[j]]*R)
           
         }
@@ -387,3 +408,7 @@ ParentDAG2 <- function(M){
   return(parent)
     
 }
+
+
+
+
