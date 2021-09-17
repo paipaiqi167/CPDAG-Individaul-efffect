@@ -187,27 +187,6 @@ ParentDAG <- function(x.pos=NA,graphEst){
 
 }
 
-  ######################################################
-  #cat("Caculate by package \n")
-  
-  #ad <- pdag2allDags(ad.g)$dags
-  #n.dags <- nrow(ad)
-  
-  #parent$ndag = n.dags
-  
-  #for (i in 1:n.dags)
-  #{for(j in c(1:length(x.pos)))
-  #{
-  #  wgt.unique <- t(matrix(ad[i, ], p, p))
-  #  if(length(which(wgt.unique[x.pos[j], ] != 0))==0)
-  #  {
-  #    parent$node[[j]][[i]] = 0
-  #  }else{
-  #    parent$node[[j]][[i]] <- as.vector(which(wgt.unique[x.pos[j], ]!= 0))
-  #  }
-  #}
-  #}
-  #return(parent)
 }
 
 INDAG <- function(S,G,Y,s,Confound=NA,True.Parent = NA){
