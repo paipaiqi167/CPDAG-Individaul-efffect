@@ -79,6 +79,7 @@ ParentDAG <- function(x.pos=NA,graphEst){
     }
     cluster.set = list()
     
+    
     NewS.set = S.set
     count = 1
     for(i in c(1:q))
@@ -186,13 +187,13 @@ ParentDAG <- function(x.pos=NA,graphEst){
   
 
 }
-
 }
 
 INDAG <- function(S,G,Y,s,Confound=NA,True.Parent = NA){
   if(is.na(Confound))
   {
     S = as.matrix(S)
+    G = as.matrix(G)
     
     p = dim(S)[2]
     q = dim(G)[2]
@@ -203,6 +204,14 @@ INDAG <- function(S,G,Y,s,Confound=NA,True.Parent = NA){
     s.G = apply(G, 2, function(x)x=x-mean(x))
     s.S = S - mean(S)
     s.Y = Y - mean(Y)
+    
+   
+    Rr = matrix(0,n,q)
+    for(i in c(1:q))
+    {
+      M = lm(G[,i]~S)
+      Rr[,i] = M$residuals
+    }
     
     beta_part1 = c()
     Z_part1 = matrix(0,n,q)
@@ -221,25 +230,26 @@ INDAG <- function(S,G,Y,s,Confound=NA,True.Parent = NA){
       Pr = ParentDAG2(True.Parent)
     }else{
       
-      suffStat <- list(C = cor(G), n = nrow(G))
+      suffStat <- list(C = cor(Rr), n = nrow(Rr))
       CP =  pc(suffStat, indepTest = gaussCItest,
-                  p = ncol(G), alpha = 0.01)
+                  p = ncol(Rr), alpha = 0.01)
       Pr = ParentDAG(g,CP@graph)
     }
+    
     
     beta_part2 = rep(0,q)
     Z_part2 = matrix(0,n,q)
     
+    print(q)
     for (j in c(1:q)) 
     {
 
       for(i in c(1:Pr$ndag[j]))
       {
-        #print(c(j,i))
         if(Pr$node[[j]][[i]][1]!=0)  ###　this node has parent nodes
         {
-          
-          M = lm(Y~G[,g[j]]+G[,c(Pr$node[[j]][[i]])]+S[,s])
+
+          M = lm(Y~G[,c(g[j],Pr$node[[j]][[i]])]+S[,s])
           beta_part2[j] = beta_part2[j]  + coef(M)[2]
           
           R = Y - s.G[,c(g[j],Pr$node[[j]][[i]])]%*%M$coefficients[-c(1,length(M$coefficients))]
@@ -376,18 +386,16 @@ ParentDAG2 <- function(M){
 
   for(j in c(1:q))
   {
-    if(length(which(M[j,-j] != 0))==0)
+    if(length(which(M[-j,j] != 0))==0)
     {
       parent$node[[j]] = 0
     }else{
-      parent$node[[j]] <- setdiff(as.vector(which(M[j,]!= 0)),j)
+      parent$node[[j]] <- setdiff(as.vector(which(M[,j]!= 0)),j)
     }
   }
   
   return(parent)
     
 }
-
-
 
 
